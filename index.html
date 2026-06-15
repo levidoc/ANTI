@@ -184,8 +184,13 @@
         Object.entries(params || {}).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, v); });
         url.searchParams.set('api_key', VM_API_KEY);
         try {
-            const res = await fetch(url.toString(), { headers: { 'X-API-Key': VM_API_KEY, 'Authorization': `Bearer ${VM_API_KEY}` } });
-            if (!res.ok) { console.error('VM API GET failed', params, res.status); return null; }
+
+            fetch('http://demo-embedded.varsitymarket.co.za/store-access/36/?state=products', {
+  headers: { 'X-API-Key': VM_API_KEY }
+})
+.then(res => res.json())
+.then(data => console.log(data));
+
             return await res.json();
         } catch (err) { console.error('VM API GET error', params, err); return null; }
     }
