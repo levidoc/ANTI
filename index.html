@@ -173,42 +173,68 @@
     // ██████████████████████████████████████████████████████████████
     // FULL STORE LOGIC — Varsity Market API Integration (Store #36)
     // ██████████████████████████████████████████████████████████████
-    const CONFIG = { CURRENCY: 'R' };
 
     // ---------- VARSITY MARKET API CONFIG ----------
-    const VM_API_BASE = 'https://demo-embedded.varsitymarket.co.za/store-access/36/';
-    const VM_API_KEY  = 'vm_live_b75f7873cf9b2328ddc5f14577318953fcdf4bfcfb76a87e';
+const VM_API_BASE = 'https://demo-embedded.varsitymarket.co.za/store-access/36/';
+const VM_API_KEY  = 'vm_live_b75f7873cf9b2328ddc5f14577318953fcdf4bfcfb76a87e';
 
-    async function vmGet(params) {
-        const url = new URL(VM_API_BASE);
-        Object.entries(params || {}).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, v); });
-        url.searchParams.set('api_key', VM_API_KEY);
-        try {
+async function vmGet(params) {
+    const url = new URL(VM_API_BASE);
+    
+    // Append params dynamically to the URL
+    Object.entries(params || {}).forEach(([k, v]) => { 
+        if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, v); 
+    });
+    
+    // Add the api_key to the query params as your code intended
+    url.searchParams.set('api_key', VM_API_KEY);
 
-            fetch('http://demo-embedded.varsitymarket.co.za/store-access/36/?state=products', {
-  headers: { 'X-API-Key': 'vm_live_b75f7873cf9b2328ddc5f14577318953fcdf4bfcfb76a87e' }
-})
-.then(res => res.json())
-.then(data => console.log(data));
+    try {
+        // Use the dynamically constructed URL object
+        const res = await fetch(url.toString(), {
+            method: 'GET',
+            headers: { 'X-API-Key': VM_API_KEY }
+        });
 
-            return await res.json();
-        } catch (err) { console.error('VM API GET error', params, err); return null; }
+        if (!res.ok) { 
+            console.error('VM API GET failed', params, res.status); 
+            return null; 
+        }
+
+        return await res.json();
+    } catch (err) { 
+        console.error('VM API GET error', params, err); 
+        return null; 
     }
+}
 
-    async function vmPost(state, body) {
-        const url = new URL(VM_API_BASE);
-        url.searchParams.set('state', state);
-        url.searchParams.set('api_key', VM_API_KEY);
-        try {
-            const res = await fetch(url.toString(), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-API-Key': VM_API_KEY, 'Authorization': `Bearer ${VM_API_KEY}` },
-                body: JSON.stringify(body || {})
-            });
-            if (!res.ok) { console.error('VM API POST failed', state, res.status); return null; }
-            return await res.json();
-        } catch (err) { console.error('VM API POST error', state, err); return null; }
+async function vmPost(state, body) {
+    const url = new URL(VM_API_BASE);
+    url.searchParams.set('state', state);
+    url.searchParams.set('api_key', VM_API_KEY);
+
+    try {
+        const res = await fetch(url.toString(), {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json', 
+                'X-API-Key': VM_API_KEY, 
+                'Authorization': `Bearer ${VM_API_KEY}` 
+            },
+            body: JSON.stringify(body || {})
+        });
+
+        if (!res.ok) { 
+            console.error('VM API POST failed', state, res.status); 
+            return null; 
+        }
+
+        return await res.json();
+    } catch (err) { 
+        console.error('VM API POST error', state, err); 
+        return null; 
     }
+}
 
     function vmList(res, ...keys) {
         if (!res) return [];
