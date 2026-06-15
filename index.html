@@ -176,7 +176,7 @@
     const CONFIG = { CURRENCY: 'R' };
 
     // ---------- VARSITY MARKET API CONFIG ----------
-    const VM_API_BASE = 'http://demo-embedded.varsitymarket.co.za/store-access/36/';
+    const VM_API_BASE = 'https://demo-embedded.varsitymarket.co.za/store-access/36/';
     const VM_API_KEY  = 'vm_live_b75f7873cf9b2328ddc5f14577318953fcdf4bfcfb76a87e';
 
     async function vmGet(params) {
@@ -186,7 +186,7 @@
         try {
 
             fetch('http://demo-embedded.varsitymarket.co.za/store-access/36/?state=products', {
-  headers: { 'X-API-Key': VM_API_KEY }
+  headers: { 'X-API-Key': 'vm_live_b75f7873cf9b2328ddc5f14577318953fcdf4bfcfb76a87e' }
 })
 .then(res => res.json())
 .then(data => console.log(data));
