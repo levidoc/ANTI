@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>ANTI CLOTHING | ANTI isn't just about being against things; it’s about stripping away the excess of the modern fashion industry.</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #050505; color: #e5e5e5; font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 10px; }
+        .cart-drawer { transform: translateX(100%); transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1); }
+        .cart-drawer.open { transform: translateX(0); }
+        .modal-overlay { backdrop-filter: blur(8px); opacity: 0; pointer-events: none; transition: 0.2s; }
+        .modal-overlay.open { opacity: 1; pointer-events: auto; }
+        .img-zoom img { transition: transform 0.5s ease; }
+        .img-zoom:hover img { transform: scale(1.03); }
+        .view { animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .menu-overlay {
+            height: 100%; width: 0; position: fixed; z-index: 100; top: 0; left: 0;
+            background: rgba(0,0,0,0.96); backdrop-filter: blur(16px);
+            overflow-x: hidden; transition: 0.4s; max-width: 80vw;
+        }
+        .closebtn { font-size: 3rem; display: flex; justify-content: flex-end; padding: 1rem 2rem; cursor: pointer; color: #aaa; }
+        .overlay-content { margin-top: 12vh; text-align: center; }
+        .nav-link { font-size: 1.6rem; font-weight: 500; margin: 1.2rem 0; }
+    </style>
+    <meta name="description" content="ANTI Clothing is a utilitarian apparel project built on the rejection of modern fashion norms.">
+    <link rel="icon" href="https://anti.top/assets/logo.png">
+</head>
+<body class="antialiased">
+
+<!-- MOBILE OVERLAY -->
+<div id="myNav" class="menu-overlay" style="width: 0%;">
+    <a class="closebtn" onclick="closeMenu()">×</a>
+    <div class="overlay-content">
+        <img onclick="reload_page('#')" src="https://anti.top/assets/logo.png" style="width:20vh; height:auto; margin:auto; ">
+        <a href="#" onclick="closeMenu(); navigate('shop')" class="nav-link block hover:text-white">SHOP</a>
+        <a href="#" onclick="closeMenu(); navigate('categories')" class="nav-link block hover:text-white">CATEGORIES</a>
+        <a href="#" onclick="closeMenu(); navigate('stories')" class="nav-link block hover:text-white">STORIES</a>
+        <a href="#" onclick="closeMenu(); handleAccountClick()" class="nav-link block hover:text-white">ACCOUNT</a>
+        <a href="#" onclick="closeMenu(); navigate('support')" class="nav-link block hover:text-white">SUPPORT</a>
+        <p class="text-[10px] tracking-widest mt-20 text-zinc-600">Powered by Varsity Market Technologies</p>
+    </div>
+</div>
+
+<!-- NAVIGATION -->
+<nav class="fixed top-0 w-full z-50 border-b border-white/10 bg-black/80 backdrop-blur-xl">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+        <a href="#shop">
+            <img src="https://anti.top/assets/logo.png" style="max-width: 2.5rem; width:100%;">
+        </a>
+        <div class="flex items-center gap-6">
+            <button onclick="navigate('search')" class="hover:text-white/70"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></button>
+            <button onclick="openMenu()" class="hover:text-white/70"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16"></path><path d="M4 12h16"></path><path d="M4 19h16"></path></svg></button>
+            <button onclick="toggleCart()" class="relative"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg><span id="cart-dot" class="absolute -top-2 -right-3 text-xs font-bold bg-white text-black rounded-full w-5 h-5 inline-flex items-center justify-center">0</span></button>
+        </div>
+    </div>
+</nav>
+
+<!-- VIEWS: same HTML structure, dynamic content filled by JS -->
+<div id="view-shop" class="view pt-32 pb-20"></div>
+<div id="view-categories" class="view pt-32 pb-32 px-6 max-w-7xl mx-auto hidden"></div>
+<div id="view-product" class="view hidden pt-32 pb-32 px-6 max-w-7xl mx-auto"></div>
+<div id="view-account" class="view pt-40 pb-40 px-6 max-w-md mx-auto text-center hidden"></div>
+<div id="view-dashboard" class="view hidden pt-32 pb-32 px-6 max-w-7xl mx-auto"></div>
+<div id="view-orders" class="view hidden pt-32 pb-32 px-6 max-w-5xl mx-auto"></div>
+<div id="view-order-detail" class="view hidden pt-32 pb-32 px-6 max-w-5xl mx-auto"></div>
+<div id="view-search" class="view pt-32 pb-32 px-6 max-w-7xl mx-auto hidden"></div>
+<div id="view-stories" class="view pt-32 pb-32 px-6 max-w-7xl mx-auto hidden"></div>
+<div id="view-contact" class="view pt-32 pb-32 px-6 max-w-3xl mx-auto hidden"></div>
+<div id="view-faq" class="view pt-32 pb-32 px-6 max-w-3xl mx-auto hidden"></div>
+<div id="view-support" class="view pt-32 pb-32 px-6 max-w-4xl mx-auto hidden"></div>
+<div id="view-policies" class="view pt-32 pb-32 px-6 max-w-4xl mx-auto hidden"></div>
+<div id="view-collection" class="view hidden pt-32 pb-32 px-6 max-w-7xl mx-auto"></div>
+<div id="view-404" class="view hidden pt-40 pb-40 text-center"><h1 class="text-9xl font-black">404</h1><p class="text-zinc-400">Lost in the dark.</p><button onclick="navigate('shop')" class="mt-6 bg-white text-black px-8 py-3 rounded-full">RETURN HOME</button></div>
+
+<!-- CART DRAWER -->
+<div id="drawer-overlay" onclick="toggleCart()" class="fixed inset-0 bg-black/70 z-[60] opacity-0 pointer-events-none transition"></div>
+<div id="cart-drawer" class="cart-drawer fixed top-0 right-0 h-full w-full md:w-[450px] bg-black border-l border-white/10 z-[70] flex flex-col shadow-2xl">
+    <div class="p-6 border-b border-white/10 flex justify-between items-center"><h2 class="text-xl font-bold">BAG</h2><button onclick="toggleCart()" class="text-white/60 text-2xl">✕</button></div>
+    <div id="cart-items" class="flex-grow overflow-y-auto p-6 space-y-6"></div>
+    <div class="p-6 border-t border-white/10 space-y-4">
+        <div class="flex gap-2"><input type="text" id="discount-code" placeholder="DISCOUNT CODE" class="bg-black border border-white/20 p-3 rounded-xl flex-1 text-sm uppercase"><button onclick="applyDiscount()" class="bg-white/10 px-4 rounded-xl text-sm font-bold hover:bg-white hover:text-black">APPLY</button></div>
+        <div class="space-y-2 text-sm"><div class="flex justify-between"><span>Subtotal</span><span id="subtotal">R 0.00</span></div><div id="discount-row" class="hidden flex justify-between text-green-400"><span>Discount</span><span id="discount-amount"></span></div></div>
+        <div class="text-lg font-bold flex justify-between"><span>Total</span><span id="cart-drawer-total">R 0.00</span></div>
+        <button onclick="openCheckout()" class="w-full bg-white text-black font-bold py-4 rounded-full">CHECKOUT →</button>
+    </div>
+</div>
+
+<!-- CHECKOUT MODAL -->
+<div id="checkout-modal" class="modal-overlay fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80">
+    <div class="bg-black border border-white/20 w-full max-w-2xl rounded-2xl p-8 max-h-[90vh] overflow-auto">
+        <div class="flex justify-between mb-6"><h2 class="text-3xl font-black">FINALIZE</h2><button onclick="closeCheckout()">✕</button></div>
+        <form onsubmit="handleCheckout(event)" class="space-y-6">
+            <div class="grid md:grid-cols-2 gap-4"><input type="email" placeholder="EMAIL" required class="bg-black border border-white/20 p-4 rounded-xl"><input type="text" placeholder="FULL NAME" required class="bg-black border border-white/20 p-4 rounded-xl"></div>
+            <input type="text" placeholder="ADDRESS" required class="w-full bg-black border border-white/20 p-4 rounded-xl">
+            <div class="bg-black/50 border border-white/10 p-4 rounded-xl"><div class="flex gap-4"><input type="text" placeholder="4242 4242 4242 4242" class="bg-transparent outline-none flex-1"><input type="text" placeholder="MM/YY" class="w-20"><input type="text" placeholder="CVV" class="w-16"></div></div>
+            <div class="flex justify-between text-xl font-bold"><span>GRAND TOTAL</span><span id="final-total">R 0.00</span></div>
+            <button type="submit" class="w-full bg-white text-black py-5 rounded-full font-bold">PLACE ORDER</button>
+        </form>
+    </div>
+</div>
+
+<footer class="border-t border-white/10 py-16 px-6 text-center text-xs text-zinc-500">
+    <div class="max-w-7xl mx-auto flex flex-wrap justify-between gap-6"><span>© ANTI CLOTHING</span><div class="flex gap-6 flex-wrap"><a onclick="navigate('policies')" class="hover:text-white cursor-pointer">POLICIES</a><a onclick="navigate('stories')" class="hover:text-white cursor-pointer">STORIES</a><a onclick="navigate('contact')" class="hover:text-white cursor-pointer">CONTACT</a><a onclick="navigate('faq')" class="hover:text-white cursor-pointer">FAQ</a><a onclick="navigate('support')" class="hover:text-white cursor-pointer">SUPPORT</a></div><p>Powered By Varsity Market</p></div>
+</footer>
+
+<script>
+// ------------------------------------------------------------------
+// FULL API INTEGRATION - VARSITY MARKET API (Store #36)
+// Implements: Products, Categories, Cart, Checkout, Customer Auth, Orders, Addresses, Discounts
+// ------------------------------------------------------------------
+const CONFIG = {
+    CURRENCY: 'R',
+    STORE_ID: 36,
+    API_KEY: 'vm_live_b75f7873cf9b2328ddc5f14577318953fcdf4bfcfb76a87e',
+    BASE_URL: 'http://demo-embedded.varsitymarket.co.za/store-access/36/'
+};
+
+// ---------- Helper: API request with store key + optional customer token ----------
+let customerToken = localStorage.getItem('anti_customer_token') || null;
+let customerData = null;
+try { customerData = JSON.parse(localStorage.getItem('anti_customer_data')) || null; } catch(e) { customerData = null; }
+
+async function apiRequest(state, method = 'GET', body = null, queryParams = {}) {
+    const url = new URL(CONFIG.BASE_URL);
+    url.searchParams.set('state', state);
+    url.searchParams.set('api_key', CONFIG.API_KEY);
+    Object.entries(queryParams).forEach(([k,v]) => { if(v !== undefined && v !== null) url.searchParams.set(k, v); });
+    
+    const headers = {
+        'X-API-Key': CONFIG.API_KEY,
+        'Authorization': `Bearer ${CONFIG.API_KEY}`,
+        'Content-Type': 'application/json'
+    };
+    if (customerToken) headers['X-Customer-Token'] = customerToken;
+    
+    const options = { method, headers };
+    if (body && method !== 'GET') options.body = JSON.stringify(body);
+    
+    const resp = await fetch(url.toString(), options);
+    const json = await resp.json();
+    if (!resp.ok) throw new Error(json.error || `HTTP ${resp.status}`);
+    return json;
+}
+
+// ---------- Products & Categories ----------
+let allProducts = [];
+let allCategories = [];
+
+async function loadProducts() {
+    try {
+        const res = await apiRequest('products', 'GET', null, { page: 1, limit: 50 });
+        allProducts = (res.products || res.data || []).map(p => ({
+            id: p.id,
+            name: p.name || p.title,
+            price: parseFloat(p.price || 0),
+            category: p.category || 'General',
+            image: p.image || p.image_url || p.thumbnail || 'https://placehold.co/600x800/111/333?text=ANTI',
+            description: p.description || ''
+        }));
+    } catch(e) { console.warn('Products fallback', e); allProducts = FALLBACK_PRODUCTS; }
+    if(allProducts.length === 0) allProducts = FALLBACK_PRODUCTS;
+    renderCatalog();
+}
+async function loadCategories() {
+    try {
+        const res = await apiRequest('categories');
+        allCategories = (res.categories || res.data || []).map(c => typeof c === 'string' ? c : c.name);
+    } catch(e) { allCategories = [...new Set(allProducts.map(p => p.category))]; }
+}
+async function loadDiscounts() { try { const res = await apiRequest('discounts'); window.discountsList = res.discounts || res.data || []; } catch(e) { window.discountsList = []; } }
+
+// ---------- Cart (real API) ----------
+let cartId = localStorage.getItem('anti_cart_id');
+let currentCart = { items: [], subtotal: 0, item_count: 0 };
+
+async function ensureCart() {
+    if (cartId) return cartId;
+    const res = await apiRequest('cart_create', 'POST');
+    cartId = res.cart_id || res.id;
+    if(cartId) localStorage.setItem('anti_cart_id', cartId);
+    return cartId;
+}
+async function refreshCart() {
+    if (!cartId) { renderCartUI(); return; }
+    try {
+        const res = await apiRequest('cart', 'GET', null, { cart_id: cartId });
+        const items = res.items || res.line_items || [];
+        currentCart = {
+            items: items.map(i => ({ id: i.product_id, name: i.name, price: parseFloat(i.price), quantity: i.quantity, image: i.image })),
+            subtotal: parseFloat(res.subtotal || 0),
+            item_count: items.reduce((s,i) => s + i.quantity, 0)
+        };
+    } catch(e) { currentCart = { items: [], subtotal: 0, item_count: 0 }; }
+    renderCartUI();
+    updateCartDot();
+}
+async function addToCart(product, qty = 1) {
+    await ensureCart();
+    try {
+        await apiRequest('cart_add', 'POST', { cart_id: cartId, product_id: product.id, quantity: qty });
+        await refreshCart();
+    } catch(e) { alert('Could not add to cart'); }
+}
+async function updateCartItem(productId, quantity) {
+    if (quantity <= 0) await apiRequest('cart_remove', 'POST', { cart_id: cartId, product_id: productId });
+    else await apiRequest('cart_update', 'POST', { cart_id: cartId, product_id: productId, quantity });
+    await refreshCart();
+}
+async function clearCart() { if(cartId) await ensureCart(); cartId = null; localStorage.removeItem('anti_cart_id'); currentCart = { items: [], subtotal: 0, item_count: 0 }; renderCartUI(); updateCartDot(); }
+
+// ---------- Customer Auth ----------
+async function customerRegister(email, password, name) {
+    const res = await apiRequest('customer_register', 'POST', { email, password, name: name || '' });
+    if(res.token) { customerToken = res.token; customerData = res.customer; localStorage.setItem('anti_customer_token', customerToken); localStorage.setItem('anti_customer_data', JSON.stringify(customerData)); }
+    return res;
+}
+async function customerLogin(email, password) {
+    const res = await apiRequest('customer_login', 'POST', { email, password });
+    if(res.token) { customerToken = res.token; customerData = res.customer; localStorage.setItem('anti_customer_token', customerToken); localStorage.setItem('anti_customer_data', JSON.stringify(customerData)); }
+    return res;
+}
+async function customerLogout() {
+    if(customerToken) try { await apiRequest('customer_logout', 'POST'); } catch(e) {}
+    customerToken = null; customerData = null; localStorage.removeItem('anti_customer_token'); localStorage.removeItem('anti_customer_data');
+}
+async function fetchCustomerOrders() {
+    if(!customerToken) return [];
+    try { const res = await apiRequest('customer_my_orders', 'GET'); return res.orders || []; } catch(e) { return []; }
+}
+async function fetchCustomerProfile() {
+    if(!customerToken) return null;
+    try { const res = await apiRequest('customer_me', 'GET'); customerData = res.customer; localStorage.setItem('anti_customer_data', JSON.stringify(customerData)); return customerData; } catch(e) { return null; }
+}
+async function changePassword(current, newPwd) {
+    const res = await apiRequest('customer_change_password', 'POST', { current_password: current, new_password: newPwd });
+    if(res.token) { customerToken = res.token; localStorage.setItem('anti_customer_token', customerToken); }
+    return res;
+}
+async function addCustomerAddress(address) { return await apiRequest('customer_address_create', 'POST', address); }
+async function getAddresses() { try { const res = await apiRequest('customer_addresses', 'GET'); return res.addresses || []; } catch(e) { return []; } }
+async function deleteAddress(id) { return await apiRequest('customer_address_delete', 'POST', { id }); }
+
+// ---------- Checkout & Orders (Guest & Logged) ----------
+async function placeCheckout(sessionData) {
+    if(customerToken) {
+        const res = await apiRequest('checkout_create', 'POST', { cart_id: cartId, total_amount: sessionData.total });
+        const complete = await apiRequest('checkout_complete', 'POST', { session_id: res.session_id, customer_name: sessionData.name, customer_email: sessionData.email, customer_phone: sessionData.phone || '', customer_address: sessionData.address });
+        return complete;
+    } else {
+        const orderPayload = { name: sessionData.name, email: sessionData.email, total: sessionData.total, items: currentCart.items.map(i => ({ product_id: i.id, quantity: i.quantity, price: i.price, name: i.name })) };
+        const res = await apiRequest('order', 'POST', orderPayload);
+        return res;
+    }
+}
+
+// ---------- UI Rendering Functions (matching existing DOM) ----------
+function renderCatalog() {
+    const container = document.getElementById('catalog-container');
+    if(!container) return;
+    container.innerHTML = allProducts.map(p => `<div onclick="openPDP(${p.id})" class="group cursor-pointer border border-white/10 rounded-2xl overflow-hidden bg-black/40 hover:border-white/40 transition"><div class="img-zoom h-80 overflow-hidden"><img src="${p.image}" class="w-full h-full object-cover grayscale-[0.3] group-hover:scale-105 transition"></div><div class="p-5"><div class="flex justify-between"><h3 class="font-bold text-lg">${escapeHtml(p.name)}</h3><span>${CONFIG.CURRENCY} ${p.price.toFixed(2)}</span></div><p class="text-xs text-zinc-500 uppercase">${p.category}</p></div></div>`).join('');
+    const featured = document.getElementById('featured-grid');
+    if(featured) featured.innerHTML = allProducts.slice(0,4).map(p => `<div onclick="openPDP(${p.id})" class="group cursor-pointer border border-white/10 rounded-2xl overflow-hidden bg-black/40 hover:border-white/40 transition"><div class="img-zoom h-64 overflow-hidden"><img src="${p.image}" class="w-full h-full object-cover grayscale-[0.3] group-hover:scale-105 transition"></div><div class="p-4"><div class="flex justify-between"><h3 class="font-bold">${p.name}</h3><span>${CONFIG.CURRENCY} ${p.price.toFixed(2)}</span></div></div></div>`).join('');
+}
+function renderCartUI() {
+    const container = document.getElementById('cart-items');
+    if(!container) return;
+    if(currentCart.items.length === 0) { container.innerHTML = '<div class="text-center text-zinc-500 py-20">YOUR BAG IS EMPTY</div>'; document.getElementById('subtotal').innerText = `${CONFIG.CURRENCY} 0.00`; document.getElementById('cart-drawer-total').innerText = `${CONFIG.CURRENCY} 0.00`; document.getElementById('discount-row').classList.add('hidden'); return; }
+    container.innerHTML = currentCart.items.map(i => `<div class="flex gap-4"><div class="w-20 h-20 bg-white/5 rounded-lg overflow-hidden"><img src="${i.image}" class="w-full h-full object-cover"></div><div class="flex-1"><div class="font-bold">${escapeHtml(i.name)}</div><div>${CONFIG.CURRENCY} ${i.price.toFixed(2)}</div><div class="flex gap-3 mt-2"><button onclick="updateQuantity(${i.id},-1)" class="border px-2 rounded">-</button><span>${i.quantity}</span><button onclick="updateQuantity(${i.id},1)" class="border px-2 rounded">+</button></div></div><div class="font-bold">${CONFIG.CURRENCY} ${(i.price * i.quantity).toFixed(2)}</div></div>`).join('');
+    let sub = currentCart.subtotal;
+    document.getElementById('subtotal').innerText = `${CONFIG.CURRENCY} ${sub.toFixed(2)}`;
+    let total = sub;
+    if(window.currentDiscount) {
+        let off = window.currentDiscount.percent ? sub * window.currentDiscount.percent / 100 : (window.currentDiscount.amount || 0);
+        total = Math.max(0, sub - off);
+        document.getElementById('discount-row').classList.remove('hidden');
+        document.getElementById('discount-amount').innerText = `-${CONFIG.CURRENCY} ${off.toFixed(2)}`;
+    } else document.getElementById('discount-row').classList.add('hidden');
+    document.getElementById('cart-drawer-total').innerText = `${CONFIG.CURRENCY} ${total.toFixed(2)}`;
+}
+function updateCartDot() { document.getElementById('cart-dot').innerText = currentCart.item_count; }
+window.updateQuantity = async (id, delta) => {
+    const item = currentCart.items.find(i => i.id === id);
+    if(!item) return;
+    const newQty = item.quantity + delta;
+    await updateCartItem(id, newQty);
+};
+window.applyDiscount = () => {
+    let code = document.getElementById('discount-code').value.toUpperCase().trim();
+    if(!code) return;
+    let match = (window.discountsList || []).find(d => (d.code || d.coupon || '').toUpperCase() === code);
+    if(match) {
+        let percent = match.percent ?? match.percentage;
+        let amount = match.amount;
+        window.currentDiscount = { percent: percent ? parseFloat(percent) : 0, amount: amount ? parseFloat(amount) : 0 };
+        renderCartUI();
+    } else alert('Invalid code');
+};
+window.openPDP = (id) => {
+    const p = allProducts.find(p => p.id === id);
+    if(!p) return;
+    let pdpQty = 1;
+    document.getElementById('view-product').innerHTML = `<div class="flex items-center gap-4 mb-6"><button onclick="navigate('shop')" class="text-sm text-zinc-400 hover:text-white">← BACK</button><span>/${p.category}</span></div><div class="grid md:grid-cols-2 gap-12"><div class="rounded-3xl overflow-hidden border border-white/10"><img src="${p.image}" class="w-full object-cover"></div><div><h1 class="text-5xl font-black">${escapeHtml(p.name)}</h1><p class="text-3xl mt-4">${CONFIG.CURRENCY} ${p.price.toFixed(2)}</p><p class="text-zinc-400 mt-6">${escapeHtml(p.description)}</p><div class="mt-8"><div class="flex items-center gap-4 mb-6"><button onclick="changePdpQty(-1)" class="border border-white/30 w-10 h-10 rounded-full">−</button><span id="pdp-qty" class="text-xl w-12 text-center">1</span><button onclick="changePdpQty(1)" class="border border-white/30 w-10 h-10 rounded-full">+</button></div><button onclick="addPdpToCart(${p.id})" class="w-full bg-white text-black py-5 rounded-full font-bold">ADD TO BAG →</button></div></div></div>`;
+    showView('product');
+    window.changePdpQty = (d) => { let span = document.getElementById('pdp-qty'); if(span) { let val = Math.max(1, parseInt(span.innerText) + d); span.innerText = val; window._pdpQty = val; } };
+    window.addPdpToCart = async (pid) => { const qty = parseInt(document.getElementById('pdp-qty')?.innerText || 1); const prod = allProducts.find(x=>x.id===pid); if(prod) await addToCart(prod, qty); toggleCart(); };
+    window._pdpQty = 1;
+};
+// Auth UI
+function renderAccountView() {
+    document.getElementById('view-account').innerHTML = `<h1 class="text-5xl font-black text-white">ENTER</h1><p class="text-zinc-400 mt-2 mb-10">Sign in or create account to place orders</p><div class="bg-black/60 border border-white/10 p-8 rounded-3xl"><input type="email" id="login-email" placeholder="Email" class="w-full bg-black border border-white/20 p-4 rounded-xl text-white outline-none focus:border-white mb-4"><input type="text" id="login-name" placeholder="Full name (optional)" class="w-full bg-black border border-white/20 p-4 rounded-xl text-white outline-none focus:border-white mb-4"><input type="password" id="login-password" placeholder="Password (min 8 chars)" class="w-full bg-black border border-white/20 p-4 rounded-xl text-white outline-none focus:border-white mb-6"><button onclick="handleAuth()" class="w-full bg-white text-black font-bold py-4 rounded-xl hover:bg-gray-200">LOGIN / REGISTER</button><p class="text-xs text-zinc-500 mt-4">One-click access — orders & dashboard saved</p></div>`;
+}
+window.handleAuth = async () => {
+    const email = document.getElementById('login-email').value;
+    const name = document.getElementById('login-name').value;
+    const password = document.getElementById('login-password').value;
+    if(!email || !password) { alert('Email and password required'); return; }
+    try {
+        let res;
+        try { res = await customerLogin(email, password); } catch(e) { res = await customerRegister(email, password, name); }
+        if(res && res.token) { await fetchCustomerProfile(); navigate('dashboard'); } else throw new Error('Auth failed');
+    } catch(err) { alert('Authentication error: ' + err.message); }
+};
+async function renderDashboard() {
+    if(!customerData) { navigate('account'); return; }
+    const orders = await fetchCustomerOrders();
+    const addresses = await getAddresses();
+    const totalSpent = orders.reduce((s,o)=>s+parseFloat(o.total||0),0);
+    const container = document.getElementById('view-dashboard');
+    container.innerHTML = `<div class="flex flex-wrap justify-between border-b border-white/10 pb-8 mb-10"><div><h1 class="text-6xl font-black">WELCOME BACK</h1><p class="text-zinc-400">${escapeHtml(customerData.name || customerData.email)} (${customerData.email})</p></div><button onclick="logoutUser()" class="border border-white/20 px-6 py-2 rounded-full">SIGN OUT</button></div><div class="grid md:grid-cols-3 gap-6 mb-16"><div class="border border-white/10 p-8 rounded-2xl"><div class="text-xs uppercase">TOTAL ORDERS</div><div class="text-5xl font-bold">${orders.length}</div></div><div class="border border-white/10 p-8 rounded-2xl"><div class="text-xs uppercase">LIFETIME SPENT</div><div class="text-5xl font-bold">${CONFIG.CURRENCY} ${totalSpent.toFixed(2)}</div></div><div class="border border-white/10 p-8 rounded-2xl"><div class="text-xs uppercase">STATUS</div><div class="text-2xl font-bold">BLACKLIST ELITE</div></div></div><div class="grid md:grid-cols-2 gap-8 mb-12"><div class="border border-white/10 p-6 rounded-2xl"><h3 class="text-xl font-bold mb-3">ACCOUNT DETAILS</h3><p><strong>Email:</strong> ${customerData.email}</p><p><strong>Name:</strong> ${customerData.name || '—'}</p><button onclick="changePasswordDialog()" class="text-xs underline mt-2">Change Password</button></div><div class="border border-white/10 p-6 rounded-2xl"><h3 class="text-xl font-bold mb-3">ADDRESSES</h3><div id="address-list">${addresses.map(a=>`<div class="text-sm mb-1">${a.recipient_name}, ${a.line1}, ${a.city}</div>`).join('')||'<p class="text-zinc-400">No addresses saved.</p>'}</div><button onclick="addAddressPrompt()" class="text-xs underline mt-2">+ Add Address</button></div></div><h2 class="text-3xl font-bold mb-6">RECENT ORDERS</h2><div id="dash-recent" class="space-y-4">${orders.slice(0,3).map(o=>`<div onclick="viewOrderDetail(${o.id})" class="border border-white/10 p-6 rounded-2xl cursor-pointer flex justify-between"><div><span class="font-bold">#${o.id}</span><p class="text-sm">${o.date || new Date().toLocaleDateString()}</p></div><div>${CONFIG.CURRENCY} ${parseFloat(o.total).toFixed(2)}</div></div>`).join('')||'<p>No orders yet</p>'}</div><div class="mt-10"><button onclick="navigate('orders')" class="border border-white/20 px-6 py-3 rounded-full">VIEW ALL ORDERS →</button></div>`;
+}
+window.logoutUser = async () => { await customerLogout(); navigate('shop'); };
+async function renderOrdersView() {
+    const orders = await fetchCustomerOrders();
+    const container = document.getElementById('orders-list');
+    if(!container) return;
+    container.innerHTML = orders.map(o=>`<div onclick="viewOrderDetail(${o.id})" class="border border-white/10 p-6 rounded-2xl cursor-pointer flex justify-between"><div><div class="text-xl font-bold">ORDER #${o.id}</div><div class="text-sm text-zinc-500">${o.date || ''}</div></div><div>${CONFIG.CURRENCY} ${parseFloat(o.total).toFixed(2)}</div></div>`).join('') || '<div class="text-center py-32">No orders</div>';
+}
+window.viewOrderDetail = (id) => { alert('Order details - full integration can be expanded'); };
+window.handleCheckout = async (e) => {
+    e.preventDefault();
+    const email = e.target.querySelector('input[type="email"]').value;
+    const name = e.target.querySelectorAll('input[type="text"]')[0].value;
+    const address = e.target.querySelectorAll('input[type="text"]')[1].value;
+    const total = parseFloat(document.getElementById('cart-drawer-total').innerText.replace('R',''));
+    if(!email || !name || !address) { alert('Please fill all fields'); return; }
+    try {
+        await placeCheckout({ email, name, address, total });
+        alert('Order placed successfully!');
+        await clearCart();
+        closeCheckout();
+        navigate(customerToken ? 'dashboard' : 'shop');
+    } catch(err) { alert('Checkout error: '+err.message); }
+};
+window.openCheckout = () => { if(currentCart.items.length===0){alert('Cart empty');return;} document.getElementById('final-total').innerText = document.getElementById('cart-drawer-total').innerText; document.getElementById('checkout-modal').classList.add('open'); toggleCart(); };
+window.closeCheckout = () => document.getElementById('checkout-modal').classList.remove('open');
+// Navigation & UI helpers
+function showView(viewId) { document.querySelectorAll('.view').forEach(el=>el.classList.add('hidden')); const v = document.getElementById(`view-${viewId}`); if(v) v.classList.remove('hidden'); else document.getElementById('view-404').classList.remove('hidden'); window.scrollTo(0,0); }
+window.navigate = (route) => { window.location.hash = route; };
+window.toggleCart = () => { document.getElementById('cart-drawer').classList.toggle('open'); document.getElementById('drawer-overlay').classList.toggle('opacity-0'); document.getElementById('drawer-overlay').classList.toggle('pointer-events-none'); };
+window.openMenu = () => document.getElementById('myNav').style.width = '100%';
+window.closeMenu = () => document.getElementById('myNav').style.width = '0%';
+window.handleAccountClick = () => { if(customerToken) navigate('dashboard'); else navigate('account'); };
+function escapeHtml(s) { if(!s) return ''; return s.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+function reload_page(hash) { window.location.hash = hash; window.location.reload(); }
+async function filterCollection(cat) { const filtered = cat==='all' ? allProducts : allProducts.filter(p=>p.category===cat); document.getElementById('collection-grid').innerHTML = filtered.map(p=>`<div onclick="openPDP(${p.id})" class="cursor-pointer group"><div class="img-zoom h-96 rounded-2xl overflow-hidden border border-white/10"><img src="${p.image}" class="w-full h-full object-cover grayscale group-hover:scale-105 transition"></div><div class="mt-4 flex justify-between"><span class="font-bold">${p.name}</span><span>${CONFIG.CURRENCY} ${p.price.toFixed(2)}</span></div></div>`).join(''); }
+// Render categories page
+function renderCategoriesGrid() {
+    const cats = allCategories.length ? allCategories : [...new Set(allProducts.map(p=>p.category))];
+    document.getElementById('categories-grid').innerHTML = cats.map(cat=>`<div onclick="navigate('collection'); setTimeout(()=>filterCollection('${cat}'),50)" class="border border-white/10 rounded-3xl overflow-hidden group cursor-pointer"><div class="h-64 overflow-hidden"><img src="https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600" class="w-full h-full object-cover grayscale group-hover:scale-105 transition"></div><div class="p-6 text-center"><h2 class="text-3xl font-bold">${cat.toUpperCase()}</h2><p class="text-zinc-400 mt-2">Explore ${cat}</p></div></div>`).join('');
+}
+// Initial views and routing
+window.addEventListener('hashchange', () => { let h = location.hash.slice(1) || 'shop'; if(h === 'account') renderAccountView(); else if(h === 'dashboard') renderDashboard(); else if(h === 'orders') { renderOrdersView(); showView('orders'); return; } else if(h === 'categories') { renderCategoriesGrid(); showView('categories'); return; } else if(h === 'collection') { if(!document.getElementById('collection-grid')){let d=document.createElement('div');d.id='collection-grid';d.className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8';document.getElementById('view-collection').appendChild(d);} filterCollection('all'); showView('collection'); return; } showView(h); });
+// Initial load
+const FALLBACK_PRODUCTS = [
+    { id:1, name:"OBSCURA HOODIE", price:1899, category:"Hoodies", image:"https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600", description:"Heavyweight cotton" },
+    { id:2, name:"VOID OVERSIZED TEE", price:799, category:"Tees", image:"https://images.unsplash.com/photo-1581655353564-df123a1eb820?w=600", description:"Pigment-dyed" },
+    { id:3, name:"SHADOW CARGO PANTS", price:1499, category:"Pants", image:"https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=600", description:"Tapered fit" },
+    { id:4, name:"SILVER CHAIN", price:499, category:"Accessories", image:"https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=600", description:"Stainless steel" },
+    { id:5, name:"DECONSTRUCTED DENIM JACKET", price:2499, category:"Outerwear", image:"https://images.unsplash.com/photo-1542272604-6c5b3c421f10?w=600", description:"Asymmetric" }
+];
+(async function init() {
+    await loadProducts(); await loadCategories(); await loadDiscounts(); await ensureCart(); await refreshCart(); if(customerToken) await fetchCustomerProfile();
+    if(!location.hash || location.hash === '#') navigate('shop'); else window.dispatchEvent(new Event('hashchange'));
+    // Build missing DOM elements for catalog
+    const shopDiv = document.getElementById('view-shop');
+    shopDiv.innerHTML = `<div class="relative mb-20 px-6 max-w-7xl mx-auto"><div class="absolute inset-0 bg-gradient-to-r from-black via-transparent to-black opacity-60 rounded-3xl"></div><div class="relative z-10 py-20 md:py-32 text-center md:text-left"><h1 class="text-6xl md:text-8xl font-black tracking-tighter text-white leading-[1.1]">ANTI-<br>CLOTHING</h1><p class="text-zinc-300 text-lg max-w-xl mt-6 mx-auto md:mx-0">ANTI isn't just about being against things; it’s about stripping away the excess of the modern fashion industry.</p><div class="flex gap-4 justify-center md:justify-start mt-8"><button onclick="navigate('collection')" class="bg-white text-black px-8 py-3 rounded-full font-bold text-sm hover:bg-gray-200 transition">VISIT SHOP</button><button onclick="navigate('categories')" class="border border-white/30 px-8 py-3 rounded-full text-sm hover:border-white transition">EXPLORE</button></div></div></div><div class="max-w-7xl mx-auto px-6 mb-20"><h2 class="text-3xl font-bold mb-8 border-l-4 border-white pl-4">FEATURED DROPS</h2><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" id="featured-grid"></div></div><div class="max-w-6xl mx-auto px-6 mb-20"><div class="border border-white/10 rounded-3xl p-8 md:p-12 bg-black/40 backdrop-blur-sm"><div class="flex flex-col md:flex-row gap-12 items-center"><div class="md:w-1/3"><img src="https://anti.top/assets/logo.png" alt="Founder" class="rounded-2xl w-full h-auto grayscale border border-white/20"></div><div class="md:w-2/3"><div class="text-sm uppercase tracking-wider text-zinc-500 mb-2">FROM THE FOUNDER</div><h2 class="text-3xl md:text-4xl font-bold mb-6">Demetrius</h2><p class="text-zinc-300 leading-relaxed mb-4">"ANTI Clothing is a utilitarian apparel project built on the rejection of modern fashion norms. It strips away seasonal trends, excessive branding, and manufactured hype in favor of raw functionality and brutalist design."</p><p class="text-zinc-400 text-sm italic">— Founder & Creative Director</p><div class="mt-6 flex gap-4"><div><span class="text-2xl font-bold text-white">10+</span><p class="text-xs text-zinc-500">Clothing Designs</p></div><div><span class="text-2xl font-bold text-white">∞</span><p class="text-xs text-zinc-500">No compromises</p></div></div></div></div></div></div><div class="max-w-7xl mx-auto px-6 pb-20"><h2 class="text-3xl font-bold mb-8 border-l-4 border-white pl-4">ALL GARMENTS</h2><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" id="catalog-container"></div></div><div class="max-w-4xl mx-auto px-6 py-12 border-t border-white/10"><div class="text-center"><h3 class="text-2xl font-bold mb-2">JOIN THE CLUB</h3><p class="text-zinc-400 mb-6">Subscribe to our Newsletter</p><form onsubmit="event.preventDefault(); alert('Thank you');" class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"><input type="email" placeholder="Your email" class="flex-1 bg-black border border-white/20 rounded-full px-5 py-3 text-sm focus:outline-none focus:border-white"><button type="submit" class="bg-white text-black px-6 py-3 rounded-full text-sm font-bold">SUBSCRIBE</button></form></div></div>`;
+    renderCatalog();
+    const catGrid = document.getElementById('categories-grid');
+    if(catGrid) renderCategoriesGrid();
+    const searchDiv = document.getElementById('view-search');
+    searchDiv.innerHTML = `<div class="max-w-3xl mx-auto mb-12"><input type="text" id="search-input" onkeyup="handleSearch()" placeholder="Search hoodies, tees..." class="w-full bg-black border border-white/20 py-5 px-6 rounded-2xl text-white text-xl"></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" id="search-results"></div>`;
+    window.handleSearch = async () => { const q = document.getElementById('search-input')?.value; if(!q) return; try { const res = await apiRequest('search', 'GET', null, { q }); const items = res.products || res.data || []; const resultsDiv = document.getElementById('search-results'); resultsDiv.innerHTML = items.slice(0,12).map(p=>`<div onclick="openPDP(${p.id})" class="border border-white/10 p-4 rounded-2xl cursor-pointer"><img src="${p.image||p.thumbnail}" class="h-48 w-full object-cover rounded mb-2"><div class="font-bold">${p.name}</div><div>${CONFIG.CURRENCY} ${parseFloat(p.price).toFixed(2)}</div></div>`).join('') || '<p class="col-span-full text-center">no results</p>'; } catch(e) { console.warn(e); } };
+})();
+</script>
+</body>
+</html>
