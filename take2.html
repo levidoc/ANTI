@@ -119,9 +119,15 @@ const CONFIG = {
     CURRENCY: 'R',
     STORE_ID: 36,
     API_KEY: 'vm_live_b75f7873cf9b2328ddc5f14577318953fcdf4bfcfb76a87e',
-    BASE_URL: 'http://demo-embedded.varsitymarket.co.za/store-access/36/'
+    BASE_URL: 'https://demo-embedded.varsitymarket.co.za/store-access/36/'
 };
 
+fetch('https://demo-embedded.varsitymarket.co.za/store-access/36/?state=products', {
+  headers: { 'X-API-Key': 'vm_live_b75f7873cf9b2328ddc5f14577318953fcdf4bfcfb76a87e' }
+})
+.then(res => res.json())
+.then(data => console.log(data));
+    
 // ---------- Helper: API request with store key + optional customer token ----------
 let customerToken = localStorage.getItem('anti_customer_token') || null;
 let customerData = null;
